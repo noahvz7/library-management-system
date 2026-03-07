@@ -12,7 +12,7 @@ public class Member {
         this.email = email;
     }
 
-    public String getMemberID() {
+    public String getMemberId() {
         return memberID;
     }
 

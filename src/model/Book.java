@@ -41,4 +41,12 @@ public class Book {
     public boolean isAvailable() {
         return available;
     }
+
+    public void borrowBook() {
+        available = false;
+    }
+
+    public void returnBook() {
+        available = true;
+    }
 }
