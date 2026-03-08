@@ -49,4 +49,10 @@ public class Book {
     public void returnBook() {
         available = true;
     }
+
+    @Override
+    public String toString() {
+        String status = available ? "Available" : "Borrowed";
+        return String.format("[%s] ID: %s | \"%s\" by %s | Genre: %s | Year: %d", status, id, title, author, genre, publicationYear);
+    }
 }

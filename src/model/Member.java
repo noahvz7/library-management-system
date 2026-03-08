@@ -23,4 +23,9 @@ public class Member {
     public String getEmail() {
         return email;
     }
+
+    @Override
+    public String toString() {
+        return String.format("MemberID: %s | Name: %s | Email: %s", memberID, name, email);
+    }
 }

@@ -43,4 +43,14 @@ public class Loan {
     public boolean isReturned() {
         return returned;
     }
+
+    public void markReturned() {
+        this.returned = true;
+    }
+
+    @Override
+    public String toString() {
+        String status = returned ? "Returned" : (LocalDate.now().isAfter(dueDate) ? "OVERDUE" : "Active");
+        return String.format("[%s] LoanID: %s | BookID: %s | MemberID: %s | Borrowed: %s | Due: %s | Status: %s", status, loanId, bookId, memberId, borrowDate, dueDate, status);
+    }
 }

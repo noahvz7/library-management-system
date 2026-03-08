@@ -84,4 +84,23 @@ public class LibraryService {
         }
         return false;
     }
+
+    public boolean returnBook(String loanId) {
+        Loan loan = findLoanById(loanId);
+        if (loan == null || loan.isReturned()) return false;
+
+        Book book = findBookById(loan.getBookId());
+        if (book == null) return false;
+
+        loan.markReturned();
+        book.returnBook();
+        return true;
+    }
+
+    public Loan findLoanById(String loanId) {
+        for (Loan loan : loans) {
+            if (loan.getLoanId().equals(loanId)) return loan;
+        }
+        return null;
+    }
 }
