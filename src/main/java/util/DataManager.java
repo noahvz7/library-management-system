@@ -2,11 +2,13 @@ package util;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
 import model.Book;
 import model.Member;
 import model.Loan;
+import model.User;
 
 import java.io.*;
 import java.lang.reflect.Type;
@@ -24,6 +26,7 @@ public class DataManager {
     private static final String BOOKS_FILE = DATA_DIR + "/books.json";
     private static final String MEMBERS_FILE = DATA_DIR + "/members.json";
     private static final String LOANS_FILE = DATA_DIR + "/loans.json";
+    private static final String USERS_FILE = DATA_DIR + "/users.json";
 
     private final Gson gson;
 
@@ -52,6 +55,10 @@ public class DataManager {
         writeFile(LOANS_FILE, gson.toJson(loans));
     }
 
+    public void saveUsers(List<User> users) {
+        writeFile(USERS_FILE, gson.toJson(users));
+    }
+
     // load methods
 
     public List<Book> loadBooks() {
@@ -72,6 +79,12 @@ public class DataManager {
         return result != null ? result : new ArrayList<>();
     }
 
+    public List<User> loadUsers() {
+        Type type = new TypeToken<List<User>>() {}.getType();
+        List<User> result = readFile(USERS_FILE, type);
+        return result != null ? result : new ArrayList<>();
+    }
+
     // file I/O helpers
 
     private void writeFile(String path, String json) {
@@ -88,6 +101,10 @@ public class DataManager {
 
         try (FileReader reader = new FileReader(path)) {
             return gson.fromJson(reader, type);
+        } catch (JsonSyntaxException e) {
+            // if the json file is corrupted or was manually edited wrong, warn the user and start fresh instead of crashing
+            System.out.println("Warning: " + path + " is corrupted. Starting with empty data.");
+            return null;
         } catch (IOException e) {
             System.out.println("Error reading " + path + ": " + e.getMessage());
             return null;

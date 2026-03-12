@@ -6,6 +6,7 @@ import model.Loan;
 import util.DataManager;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 public class LibraryService {
@@ -15,8 +16,8 @@ public class LibraryService {
     private List<Loan> loans;
     private final DataManager dataManager;
 
-    public LibraryService() {
-        dataManager = new DataManager();
+    public LibraryService(DataManager dataManager) {
+        this.dataManager = dataManager;
         books = dataManager.loadBooks();
         members = dataManager.loadMembers();
         loans = dataManager.loadLoans();
@@ -110,6 +111,17 @@ public class LibraryService {
             if (loan.getLoanId().equals(loanId)) return loan;
         }
         return null;
+    }
+
+    // returns all loans that are past due and haven't been returned
+    public List<Loan> getOverdueLoans() {
+        List<Loan> overdue = new ArrayList<>();
+        for (Loan loan : loans) {
+            if (!loan.isReturned() && LocalDate.now().isAfter(loan.getDueDate())) {
+                overdue.add(loan);
+            }
+        }
+        return overdue;
     }
 
     // saves all collections to disk
