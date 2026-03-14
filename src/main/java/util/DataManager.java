@@ -6,7 +6,6 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
 import model.Book;
-import model.Member;
 import model.Loan;
 import model.User;
 
@@ -19,12 +18,10 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-// handles saving and loading library data as JSON files
 public class DataManager {
 
     private static final String DATA_DIR = "data";
     private static final String BOOKS_FILE = DATA_DIR + "/books.json";
-    private static final String MEMBERS_FILE = DATA_DIR + "/members.json";
     private static final String LOANS_FILE = DATA_DIR + "/loans.json";
     private static final String USERS_FILE = DATA_DIR + "/users.json";
 
@@ -41,14 +38,8 @@ public class DataManager {
         }
     }
 
-    // save methods
-
     public void saveBooks(List<Book> books) {
         writeFile(BOOKS_FILE, gson.toJson(books));
-    }
-
-    public void saveMembers(List<Member> members) {
-        writeFile(MEMBERS_FILE, gson.toJson(members));
     }
 
     public void saveLoans(List<Loan> loans) {
@@ -59,17 +50,9 @@ public class DataManager {
         writeFile(USERS_FILE, gson.toJson(users));
     }
 
-    // load methods
-
     public List<Book> loadBooks() {
         Type type = new TypeToken<List<Book>>() {}.getType();
         List<Book> result = readFile(BOOKS_FILE, type);
-        return result != null ? result : new ArrayList<>();
-    }
-
-    public List<Member> loadMembers() {
-        Type type = new TypeToken<List<Member>>() {}.getType();
-        List<Member> result = readFile(MEMBERS_FILE, type);
         return result != null ? result : new ArrayList<>();
     }
 
@@ -84,8 +67,6 @@ public class DataManager {
         List<User> result = readFile(USERS_FILE, type);
         return result != null ? result : new ArrayList<>();
     }
-
-    // file I/O helpers
 
     private void writeFile(String path, String json) {
         try (FileWriter writer = new FileWriter(path)) {
@@ -102,7 +83,7 @@ public class DataManager {
         try (FileReader reader = new FileReader(path)) {
             return gson.fromJson(reader, type);
         } catch (JsonSyntaxException e) {
-            // if the json file is corrupted or was manually edited wrong, warn the user and start fresh instead of crashing
+            // corrupted file, start fresh instead of crashing
             System.out.println("Warning: " + path + " is corrupted. Starting with empty data.");
             return null;
         } catch (IOException e) {

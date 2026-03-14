@@ -1,7 +1,6 @@
 package service;
 
 import model.Book;
-import model.Member;
 import model.Loan;
 import util.DataManager;
 
@@ -12,25 +11,20 @@ import java.util.List;
 public class LibraryService {
 
     private List<Book> books;
-    private List<Member> members;
     private List<Loan> loans;
     private final DataManager dataManager;
 
     public LibraryService(DataManager dataManager) {
         this.dataManager = dataManager;
         books = dataManager.loadBooks();
-        members = dataManager.loadMembers();
         loans = dataManager.loadLoans();
     }
 
-    public boolean borrowBook(String loanId, String bookId, String memberId) {
+    public boolean borrowBook(String loanId, String bookId, String username) {
         Book book = findBookById(bookId);
-        Member member = findMemberById(memberId);
+        if (book == null || !book.isAvailable()) return false;
 
-        if (book == null || member == null) return false;
-        if (!book.isAvailable()) return false;
-
-        Loan loan = new Loan(loanId, bookId, memberId, LocalDate.now(), LocalDate.now().plusDays(14));
+        Loan loan = new Loan(loanId, bookId, username, LocalDate.now(), LocalDate.now().plusDays(14));
         loans.add(loan);
         book.borrowBook();
         save();
@@ -55,11 +49,6 @@ public class LibraryService {
         save();
     }
 
-    public void registerMember(Member member) {
-        members.add(member);
-        save();
-    }
-
     public boolean removeBook(String id) {
         Book book = findBookById(id);
         if (book != null) {
@@ -70,22 +59,8 @@ public class LibraryService {
         return false;
     }
 
-    public boolean removeMember(String memberId) {
-        Member member = findMemberById(memberId);
-        if (member != null) {
-            members.remove(member);
-            save();
-            return true;
-        }
-        return false;
-    }
-
     public List<Book> getBooks() {
         return books;
-    }
-
-    public List<Member> getMembers() {
-        return members;
     }
 
     public List<Loan> getLoans() {
@@ -99,13 +74,6 @@ public class LibraryService {
         return null;
     }
 
-    public Member findMemberById(String memberId) {
-        for (Member member : members) {
-            if (member.getMemberId().equals(memberId)) return member;
-        }
-        return null;
-    }
-
     public Loan findLoanById(String loanId) {
         for (Loan loan : loans) {
             if (loan.getLoanId().equals(loanId)) return loan;
@@ -113,7 +81,15 @@ public class LibraryService {
         return null;
     }
 
-    // returns all loans that are past due and haven't been returned
+    public List<Loan> getLoansByUser(String username) {
+        List<Loan> result = new ArrayList<>();
+        for (Loan loan : loans) {
+            if (loan.getUsername().equals(username)) result.add(loan);
+        }
+        return result;
+    }
+
+    // loans that are past the due date and not returned yet
     public List<Loan> getOverdueLoans() {
         List<Loan> overdue = new ArrayList<>();
         for (Loan loan : loans) {
@@ -124,10 +100,18 @@ public class LibraryService {
         return overdue;
     }
 
-    // saves all collections to disk
+    public List<Loan> getOverdueLoansByUser(String username) {
+        List<Loan> overdue = new ArrayList<>();
+        for (Loan loan : loans) {
+            if (loan.getUsername().equals(username) && !loan.isReturned() && LocalDate.now().isAfter(loan.getDueDate())) {
+                overdue.add(loan);
+            }
+        }
+        return overdue;
+    }
+
     private void save() {
         dataManager.saveBooks(books);
-        dataManager.saveMembers(members);
         dataManager.saveLoans(loans);
     }
 }

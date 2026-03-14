@@ -1,8 +1,9 @@
 import model.Book;
-import model.Member;
 import model.Loan;
+import model.User;
 import service.AuthService;
 import service.LibraryService;
+import util.AuditLogger;
 import util.DataManager;
 
 import java.util.List;
@@ -19,20 +20,20 @@ public class Main {
         System.out.println("Library Management System");
         System.out.println("------------------------");
 
-        // if no users exist yet, prompt to create the first admin account
+        // first time setup
         if (!auth.hasUsers()) {
             System.out.println("No accounts found. Create an admin account to get started.");
             createAccount("ADMIN");
         }
 
-        // login loop, user must authenticate before accessing the system
         while (!auth.isLoggedIn()) {
             loginMenu();
         }
 
-        System.out.println("Welcome, " + auth.getCurrentUser().getUsername() + ".");
+        String user = auth.getCurrentUser().getUsername();
+        System.out.println("Welcome, " + user + ".");
+        AuditLogger.log(user, "LOGIN", "session started");
 
-        // main menu loop
         boolean running = true;
         while (running) {
             printMenu();
@@ -42,14 +43,15 @@ public class Main {
                 case "1": addBook(); break;
                 case "2": removeBook(); break;
                 case "3": listBooks(); break;
-                case "4": registerMember(); break;
-                case "5": removeMember(); break;
-                case "6": listMembers(); break;
+                case "4": registerUser(); break;
+                case "5": removeUser(); break;
+                case "6": listUsers(); break;
                 case "7": borrowBook(); break;
                 case "8": returnBook(); break;
                 case "9": listLoans(); break;
                 case "10": listOverdue(); break;
                 case "0":
+                    AuditLogger.log(user, "LOGOUT", "session ended");
                     auth.logout();
                     System.out.println("Goodbye.");
                     running = false;
@@ -61,8 +63,6 @@ public class Main {
 
         scanner.close();
     }
-
-    // authentication
 
     private static void loginMenu() {
         System.out.println("\n1. Login");
@@ -97,6 +97,7 @@ public class Main {
         if (auth.login(username, password)) {
             System.out.println("Login successful.");
         } else {
+            AuditLogger.log(username, "FAILED_LOGIN", "invalid credentials");
             System.out.println("Invalid username or password.");
         }
     }
@@ -117,23 +118,49 @@ public class Main {
             return;
         }
 
-        if (auth.register(username, password, role)) {
+        System.out.print("Full Name: ");
+        String name = scanner.nextLine().trim();
+        if (isEmpty(name)) {
+            System.out.println("Name cannot be empty.");
+            return;
+        }
+
+        System.out.print("Email: ");
+        String email = scanner.nextLine().trim();
+        if (isEmpty(email) || !email.contains("@") || !email.contains(".")) {
+            System.out.println("Invalid email.");
+            return;
+        }
+
+        if (auth.register(username, password, role, name, email)) {
             System.out.println("Account created.");
+            AuditLogger.log(username, "REGISTER", "role:" + role);
         } else {
             System.out.println("Username already taken.");
         }
     }
 
-    // main menu
+    // blocks non-admin users from calling this action
+    private static boolean requireAdmin() {
+        if (!auth.getCurrentUser().isAdmin()) {
+            System.out.println("Access denied. Admin only.");
+            return false;
+        }
+        return true;
+    }
+
+    private static String currentUser() {
+        return auth.getCurrentUser().getUsername();
+    }
 
     private static void printMenu() {
         System.out.println("\nMenu:");
-        System.out.println("1. Add Book");
-        System.out.println("2. Remove Book");
+        System.out.println("1. Add Book (admin)");
+        System.out.println("2. Remove Book (admin)");
         System.out.println("3. List Books");
-        System.out.println("4. Register Member");
-        System.out.println("5. Remove Member");
-        System.out.println("6. List Members");
+        System.out.println("4. Register User (admin)");
+        System.out.println("5. Remove User (admin)");
+        System.out.println("6. List Users (admin)");
         System.out.println("7. Borrow Book");
         System.out.println("8. Return Book");
         System.out.println("9. List Loans");
@@ -142,19 +169,16 @@ public class Main {
         System.out.print("> ");
     }
 
-    // helper to check if a string is empty or blank
-
     private static boolean isEmpty(String input) {
         return input == null || input.isEmpty();
     }
 
-    // books
-
     private static void addBook() {
+        if (!requireAdmin()) return;
+
         System.out.print("Book ID: ");
         String id = scanner.nextLine().trim();
 
-        // make sure id isnt blank
         if (isEmpty(id)) {
             System.out.println("ID cannot be empty.");
             return;
@@ -197,17 +221,19 @@ public class Main {
             return;
         }
 
-        // basic range check for publication year
         if (year < 0 || year > 2026) {
             System.out.println("Year must be between 0 and 2026.");
             return;
         }
 
         library.addBook(new Book(id, title, author, genre, year));
+        AuditLogger.log(currentUser(), "ADD_BOOK", id);
         System.out.println("Book added.");
     }
 
     private static void removeBook() {
+        if (!requireAdmin()) return;
+
         System.out.print("Book ID: ");
         String id = scanner.nextLine().trim();
 
@@ -217,6 +243,7 @@ public class Main {
         }
 
         if (library.removeBook(id)) {
+            AuditLogger.log(currentUser(), "REMOVE_BOOK", id);
             System.out.println("Book removed.");
         } else {
             System.out.println("Book not found.");
@@ -234,74 +261,54 @@ public class Main {
         }
     }
 
-    // members
+    private static void registerUser() {
+        if (!requireAdmin()) return;
 
-    private static void registerMember() {
-        System.out.print("Member ID: ");
-        String id = scanner.nextLine().trim();
+        System.out.println("Select role: 1. Admin  2. Member");
+        System.out.print("> ");
+        String roleChoice = scanner.nextLine().trim();
+        String role = roleChoice.equals("1") ? "ADMIN" : "MEMBER";
 
-        if (isEmpty(id)) {
-            System.out.println("ID cannot be empty.");
-            return;
-        }
-
-        if (library.findMemberById(id) != null) {
-            System.out.println("That ID already exists.");
-            return;
-        }
-
-        System.out.print("Name: ");
-        String name = scanner.nextLine().trim();
-        if (isEmpty(name)) {
-            System.out.println("Name cannot be empty.");
-            return;
-        }
-
-        System.out.print("Email: ");
-        String email = scanner.nextLine().trim();
-        if (isEmpty(email)) {
-            System.out.println("Email cannot be empty.");
-            return;
-        }
-
-        // basic email check, just needs an @ and a dot after it
-        if (!email.contains("@") || !email.contains(".")) {
-            System.out.println("Invalid email format.");
-            return;
-        }
-
-        library.registerMember(new Member(id, name, email));
-        System.out.println("Member registered.");
+        createAccount(role);
     }
 
-    private static void removeMember() {
-        System.out.print("Member ID: ");
-        String id = scanner.nextLine().trim();
+    private static void removeUser() {
+        if (!requireAdmin()) return;
 
-        if (isEmpty(id)) {
-            System.out.println("ID cannot be empty.");
+        System.out.print("Username to remove: ");
+        String username = scanner.nextLine().trim();
+
+        if (isEmpty(username)) {
+            System.out.println("Username cannot be empty.");
             return;
         }
 
-        if (library.removeMember(id)) {
-            System.out.println("Member removed.");
+        // cant delete yourself
+        if (username.equals(currentUser())) {
+            System.out.println("You can't remove your own account.");
+            return;
+        }
+
+        if (auth.removeUser(username)) {
+            AuditLogger.log(currentUser(), "REMOVE_USER", username);
+            System.out.println("User removed.");
         } else {
-            System.out.println("Member not found.");
+            System.out.println("User not found.");
         }
     }
 
-    private static void listMembers() {
-        List<Member> members = library.getMembers();
-        if (members.isEmpty()) {
-            System.out.println("No members.");
+    private static void listUsers() {
+        if (!requireAdmin()) return;
+
+        List<User> users = auth.getUsers();
+        if (users.isEmpty()) {
+            System.out.println("No users.");
             return;
         }
-        for (Member m : members) {
-            System.out.println(m);
+        for (User u : users) {
+            System.out.println(u);
         }
     }
-
-    // loans
 
     private static void borrowBook() {
         System.out.print("Loan ID: ");
@@ -324,17 +331,28 @@ public class Main {
             return;
         }
 
-        System.out.print("Member ID: ");
-        String memberId = scanner.nextLine().trim();
-        if (isEmpty(memberId)) {
-            System.out.println("Member ID cannot be empty.");
-            return;
+        // admins pick who borrows, members borrow for themselves
+        String borrower;
+        if (auth.getCurrentUser().isAdmin()) {
+            System.out.print("Username of borrower: ");
+            borrower = scanner.nextLine().trim();
+            if (isEmpty(borrower)) {
+                System.out.println("Username cannot be empty.");
+                return;
+            }
+            if (auth.findUser(borrower) == null) {
+                System.out.println("User not found.");
+                return;
+            }
+        } else {
+            borrower = currentUser();
         }
 
-        if (library.borrowBook(loanId, bookId, memberId)) {
+        if (library.borrowBook(loanId, bookId, borrower)) {
+            AuditLogger.log(currentUser(), "BORROW", "loan:" + loanId + " book:" + bookId + " for:" + borrower);
             System.out.println("Book borrowed. Due in 14 days.");
         } else {
-            System.out.println("Could not borrow. Check the book/member ID and availability.");
+            System.out.println("Could not borrow. Check the book ID and availability.");
         }
     }
 
@@ -349,6 +367,7 @@ public class Main {
         }
 
         if (library.returnBook(loanId)) {
+            AuditLogger.log(currentUser(), "RETURN", "loan:" + loanId);
             System.out.println("Book returned.");
         } else {
             System.out.println("Could not return. Check the loan ID.");
@@ -356,7 +375,13 @@ public class Main {
     }
 
     private static void listLoans() {
-        List<Loan> loans = library.getLoans();
+        List<Loan> loans;
+        if (auth.getCurrentUser().isAdmin()) {
+            loans = library.getLoans();
+        } else {
+            loans = library.getLoansByUser(currentUser());
+        }
+
         if (loans.isEmpty()) {
             System.out.println("No loans.");
             return;
@@ -366,14 +391,18 @@ public class Main {
         }
     }
 
-    // shows only loans that are past due and not yet returned
     private static void listOverdue() {
-        List<Loan> overdue = library.getOverdueLoans();
+        List<Loan> overdue;
+        if (auth.getCurrentUser().isAdmin()) {
+            overdue = library.getOverdueLoans();
+        } else {
+            overdue = library.getOverdueLoansByUser(currentUser());
+        }
+
         if (overdue.isEmpty()) {
             System.out.println("No overdue loans.");
             return;
         }
-        System.out.println("Overdue loans:");
         for (Loan l : overdue) {
             System.out.println(l);
         }

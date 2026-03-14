@@ -6,7 +6,6 @@ import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.List;
 
-// handles user registration and login
 public class AuthService {
 
     private List<User> users;
@@ -19,23 +18,20 @@ public class AuthService {
         this.currentUser = null;
     }
 
-    // creates a new user account with a hashed password
-    public boolean register(String username, String password, String role) {
+    public boolean register(String username, String password, String role, String name, String email) {
         if (findUser(username) != null) return false;
 
-        // BCrypt.hashpw hashes the password with a random salt, the salt is stored inside the hash string itself
+        // hash the password so it isnt stored as plaintext
         String hashed = BCrypt.hashpw(password, BCrypt.gensalt());
-        users.add(new User(username, hashed, role));
+        users.add(new User(username, hashed, role, name, email));
         dataManager.saveUsers(users);
         return true;
     }
 
-    // checks password against the stored hash and logs the user in
     public boolean login(String username, String password) {
         User user = findUser(username);
         if (user == null) return false;
 
-        // BCrypt.checkpw compares plaintext to the hash
         if (BCrypt.checkpw(password, user.getPasswordHash())) {
             currentUser = user;
             return true;
@@ -59,10 +55,24 @@ public class AuthService {
         return !users.isEmpty();
     }
 
-    private User findUser(String username) {
+    public List<User> getUsers() {
+        return users;
+    }
+
+    public User findUser(String username) {
         for (User user : users) {
             if (user.getUsername().equals(username)) return user;
         }
         return null;
+    }
+
+    public boolean removeUser(String username) {
+        User user = findUser(username);
+        if (user != null) {
+            users.remove(user);
+            dataManager.saveUsers(users);
+            return true;
+        }
+        return false;
     }
 }
