@@ -9,6 +9,7 @@ import javafx.stage.Stage;
 import service.AuthService;
 import service.LibraryService;
 import util.AuditLogger;
+import util.Validator;
 
 // first screen shown, handles login and self-registration
 public class LoginScreen extends StackPane {
@@ -51,8 +52,7 @@ public class LoginScreen extends StackPane {
         createBtn.getStyleClass().add("action-button");
         createBtn.setMaxWidth(Double.MAX_VALUE);
         createBtn.setOnAction(e -> {
-            String msg = validateAndRegister(usernameField.getText(), passwordField.getText(),
-                    nameField.getText(), emailField.getText(), "ADMIN");
+            String msg = validateAndRegister(usernameField.getText(), passwordField.getText(), nameField.getText(), emailField.getText(), "ADMIN");
             if (msg == null) {
                 getChildren().clear();
                 getChildren().add(buildLoginCard());
@@ -88,12 +88,14 @@ public class LoginScreen extends StackPane {
                 return;
             }
 
-            if (auth.login(username, password)) {
+            // login now returns an error message or null on success
+            String error = auth.login(username, password);
+            if (error == null) {
                 AuditLogger.log(username, "LOGIN", "session started");
                 openDashboard();
             } else {
                 AuditLogger.log(username, "FAILED_LOGIN", "invalid credentials");
-                messageLabel.setText("Invalid username or password.");
+                messageLabel.setText(error);
             }
         });
 
@@ -130,8 +132,7 @@ public class LoginScreen extends StackPane {
         registerBtn.getStyleClass().add("action-button");
         registerBtn.setMaxWidth(Double.MAX_VALUE);
         registerBtn.setOnAction(e -> {
-            String msg = validateAndRegister(usernameField.getText(), passwordField.getText(),
-                    nameField.getText(), emailField.getText(), "MEMBER");
+            String msg = validateAndRegister(usernameField.getText(), passwordField.getText(), nameField.getText(), emailField.getText(), "MEMBER");
             if (msg == null) {
                 getChildren().clear();
                 getChildren().add(buildLoginCard());
@@ -157,15 +158,10 @@ public class LoginScreen extends StackPane {
         name = name.trim();
         email = email.trim();
 
-        if (username.isEmpty() || password.isEmpty() || name.isEmpty() || email.isEmpty()) {
-            return "All fields are required.";
-        }
-        if (password.length() < 4) {
-            return "Password must be at least 4 characters.";
-        }
-        if (!email.contains("@") || !email.contains(".")) {
-            return "Invalid email.";
-        }
+        // run all validations through the centralized validator
+        String error = Validator.validateRegistration(username, password, name, email);
+        if (error != null) return error;
+
         if (!auth.register(username, password, role, name, email)) {
             return "Username already taken.";
         }

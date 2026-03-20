@@ -2,6 +2,7 @@ package service;
 
 import model.Book;
 import model.Loan;
+import util.Constants;
 import util.DataManager;
 
 import java.time.LocalDate;
@@ -24,7 +25,7 @@ public class LibraryService {
         Book book = findBookById(bookId);
         if (book == null || !book.isAvailable()) return false;
 
-        Loan loan = new Loan(loanId, bookId, username, LocalDate.now(), LocalDate.now().plusDays(14));
+        Loan loan = new Loan(loanId, bookId, username, LocalDate.now(), LocalDate.now().plusDays(Constants.LOAN_DURATION_DAYS));
         loans.add(loan);
         book.borrowBook();
         save();
@@ -49,12 +50,29 @@ public class LibraryService {
         save();
     }
 
+    // only removes if no active loans exist for this book
     public boolean removeBook(String id) {
         Book book = findBookById(id);
-        if (book != null) {
-            books.remove(book);
-            save();
-            return true;
+        if (book == null) return false;
+        if (hasActiveLoans(id)) return false;
+
+        books.remove(book);
+        save();
+        return true;
+    }
+
+    // checks if a book has any unreturned loans
+    public boolean hasActiveLoans(String bookId) {
+        for (Loan loan : loans) {
+            if (loan.getBookId().equals(bookId) && !loan.isReturned()) return true;
+        }
+        return false;
+    }
+
+    // checks if a user has any unreturned loans
+    public boolean userHasActiveLoans(String username) {
+        for (Loan loan : loans) {
+            if (loan.getUsername().equals(username) && !loan.isReturned()) return true;
         }
         return false;
     }

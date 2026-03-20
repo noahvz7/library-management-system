@@ -7,16 +7,20 @@ import javafx.scene.layout.*;
 
 import model.User;
 import service.AuthService;
+import service.LibraryService;
 import util.AuditLogger;
+import util.Validator;
 
 // admin-only screen for managing user accounts
 public class UsersPane extends VBox {
 
     private final AuthService auth;
+    private final LibraryService library;
     private final TableView<User> table;
 
-    public UsersPane(AuthService auth) {
+    public UsersPane(AuthService auth, LibraryService library) {
         this.auth = auth;
+        this.library = library;
 
         setSpacing(15);
         setPadding(new Insets(20));
@@ -101,16 +105,9 @@ public class UsersPane extends VBox {
                 String email = emailField.getText().trim();
                 String role = roleBox.getValue();
 
-                if (username.isEmpty() || password.isEmpty() || name.isEmpty() || email.isEmpty()) {
-                    showAlert("All fields are required.");
-                    return;
-                }
-                if (password.length() < 4) {
-                    showAlert("Password must be at least 4 characters.");
-                    return;
-                }
-                if (!email.contains("@") || !email.contains(".")) {
-                    showAlert("Invalid email.");
+                String error = Validator.validateRegistration(username, password, name, email);
+                if (error != null) {
+                    showAlert(error);
                     return;
                 }
 
@@ -134,6 +131,12 @@ public class UsersPane extends VBox {
         // can't delete yourself
         if (selected.getUsername().equals(auth.getCurrentUser().getUsername())) {
             showAlert("You can't remove your own account.");
+            return;
+        }
+
+        // cant remove users who still have books checked out
+        if (library.userHasActiveLoans(selected.getUsername())) {
+            showAlert("Cannot remove a user with active loans.");
             return;
         }
 

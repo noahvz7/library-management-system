@@ -239,6 +239,12 @@ public class BooksPane extends VBox {
             return;
         }
 
+        // cant remove books that are currently borrowed
+        if (library.hasActiveLoans(selected.getId())) {
+            showAlert("Cannot remove a book with active loans.");
+            return;
+        }
+
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "Remove \"" + selected.getTitle() + "\"?");
         confirm.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {

@@ -1,10 +1,13 @@
 package ui;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import service.AuthService;
 import service.LibraryService;
@@ -32,7 +35,7 @@ public class Dashboard extends BorderPane {
 
         booksPane = new BooksPane(auth, library);
         loansPane = new LoansPane(auth, library);
-        usersPane = new UsersPane(auth);
+        usersPane = new UsersPane(auth, library);
         overduePane = new OverduePane(auth, library);
 
         sidebar = buildSidebar();
@@ -41,6 +44,32 @@ public class Dashboard extends BorderPane {
 
         // default to the books page on login
         showBooks();
+
+        // reset the inactivity timer on any mouse or key event
+        setOnMouseMoved(e -> auth.refreshActivity());
+        setOnKeyPressed(e -> auth.refreshActivity());
+
+        startSessionTimer();
+    }
+
+    // checks every 30 seconds if the session has expired
+    private void startSessionTimer() {
+        Timeline timer = new Timeline(new KeyFrame(Duration.seconds(30), e -> {
+            if (auth.isSessionExpired()) {
+                AuditLogger.log(auth.getCurrentUser().getUsername(), "SESSION_TIMEOUT", "auto-logout");
+                auth.logout();
+
+                Alert alert = new Alert(Alert.AlertType.INFORMATION, "Session expired due to inactivity.");
+                alert.showAndWait();
+
+                LoginScreen loginScreen = new LoginScreen(auth, library, stage);
+                Scene scene = new Scene(loginScreen, 900, 600);
+                scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+                stage.setScene(scene);
+            }
+        }));
+        timer.setCycleCount(Timeline.INDEFINITE);
+        timer.play();
     }
 
     private VBox buildSidebar() {
