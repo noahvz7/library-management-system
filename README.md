@@ -2,6 +2,8 @@
 
 A desktop library management application built with Java and JavaFX. Supports user authentication, role-based access control, book catalog management, and loan tracking with overdue detection.
 
+![Preview](preview.png)
+
 ## Features
 
 - **User Authentication** - Login system with BCrypt password hashing, brute force protection (account lockout after 5 failed attempts), and session timeout after 15 minutes of inactivity.
