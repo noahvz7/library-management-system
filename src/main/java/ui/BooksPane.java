@@ -10,6 +10,7 @@ import model.User;
 import service.AuthService;
 import service.LibraryService;
 import util.AuditLogger;
+import util.Constants;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -86,9 +87,11 @@ public class BooksPane extends VBox {
             @Override
             protected void updateItem(String status, boolean empty) {
                 super.updateItem(status, empty);
-                setText(empty ? null : status);
                 getStyleClass().removeAll("status-available", "status-borrowed");
-                if (!empty && status != null) {
+                if (empty || status == null) {
+                    setText(null);
+                } else {
+                    setText(status);
                     getStyleClass().add(status.equals("Available") ? "status-available" : "status-borrowed");
                 }
             }
@@ -96,6 +99,16 @@ public class BooksPane extends VBox {
 
         tv.getColumns().addAll(idCol, titleCol, authorCol, genreCol, yearCol, statusCol);
         tv.setPlaceholder(new Label("No books in the library."));
+
+        // click empty space to deselect
+        tv.setRowFactory(t -> {
+            TableRow<Book> row = new TableRow<>();
+            row.setOnMouseClicked(e -> {
+                if (row.isEmpty()) tv.getSelectionModel().clearSelection();
+            });
+            return row;
+        });
+
         return tv;
     }
 
@@ -135,9 +148,10 @@ public class BooksPane extends VBox {
         }
 
         // generate a unique loan id
-        String loanId = "L" + String.format("%04d", library.getLoans().size() + 1);
+        String prefix = Constants.LOAN_ID_PREFIX;
+        String loanId = prefix + String.format("%04d", library.getLoans().size() + 1);
         while (library.findLoanById(loanId) != null) {
-            loanId = "L" + String.format("%04d", Integer.parseInt(loanId.substring(1)) + 1);
+            loanId = prefix + String.format("%04d", Integer.parseInt(loanId.substring(prefix.length())) + 1);
         }
 
         // admins pick from a dropdown of registered users

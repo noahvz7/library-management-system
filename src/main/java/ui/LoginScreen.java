@@ -54,12 +54,13 @@ public class LoginScreen extends StackPane {
         createBtn.setOnAction(e -> {
             String msg = validateAndRegister(usernameField.getText(), passwordField.getText(), nameField.getText(), emailField.getText(), "ADMIN");
             if (msg == null) {
-                getChildren().clear();
-                getChildren().add(buildLoginCard());
+                showLoginWithMessage("Admin account created. Please log in.");
             } else {
                 messageLabel.setText(msg);
             }
         });
+
+        emailField.setOnAction(e -> createBtn.fire());
 
         card.getChildren().addAll(usernameField, passwordField, nameField, emailField, messageLabel, createBtn);
         return card;
@@ -134,12 +135,13 @@ public class LoginScreen extends StackPane {
         registerBtn.setOnAction(e -> {
             String msg = validateAndRegister(usernameField.getText(), passwordField.getText(), nameField.getText(), emailField.getText(), "MEMBER");
             if (msg == null) {
-                getChildren().clear();
-                getChildren().add(buildLoginCard());
+                showLoginWithMessage("Account created. Please log in.");
             } else {
                 messageLabel.setText(msg);
             }
         });
+
+        emailField.setOnAction(e -> registerBtn.fire());
 
         Hyperlink backLink = new Hyperlink("Back to login");
         backLink.setOnAction(e -> {
@@ -188,6 +190,15 @@ public class LoginScreen extends StackPane {
 
         setAlignment(Pos.CENTER);
         return card;
+    }
+
+    // switches to the login card and shows a confirmation message
+    private void showLoginWithMessage(String message) {
+        getChildren().clear();
+        getChildren().add(buildLoginCard());
+        messageLabel.setText(message);
+        messageLabel.getStyleClass().remove("error-label");
+        messageLabel.getStyleClass().add("info-label");
     }
 
     private void openDashboard() {

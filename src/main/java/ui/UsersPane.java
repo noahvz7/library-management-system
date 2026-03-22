@@ -66,6 +66,15 @@ public class UsersPane extends VBox {
 
         tv.getColumns().addAll(usernameCol, nameCol, emailCol, roleCol);
         tv.setPlaceholder(new Label("No users registered."));
+
+        tv.setRowFactory(t -> {
+            TableRow<User> row = new TableRow<>();
+            row.setOnMouseClicked(e -> {
+                if (row.isEmpty()) tv.getSelectionModel().clearSelection();
+            });
+            return row;
+        });
+
         return tv;
     }
 

@@ -6,6 +6,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 
+import model.Book;
 import model.Loan;
 import service.AuthService;
 import service.LibraryService;
@@ -62,9 +63,14 @@ public class LoansPane extends VBox {
         idCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getLoanId()));
         idCol.setPrefWidth(80);
 
-        TableColumn<Loan, String> bookCol = new TableColumn<>("Book ID");
-        bookCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getBookId()));
-        bookCol.setPrefWidth(80);
+        // shows the book title instead of just the ID
+        TableColumn<Loan, String> bookCol = new TableColumn<>("Book");
+        bookCol.setCellValueFactory(data -> {
+            Book book = library.findBookById(data.getValue().getBookId());
+            String display = book != null ? book.getTitle() : data.getValue().getBookId();
+            return new SimpleStringProperty(display);
+        });
+        bookCol.setPrefWidth(180);
 
         TableColumn<Loan, String> userCol = new TableColumn<>("User");
         userCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getUsername()));
@@ -94,9 +100,11 @@ public class LoansPane extends VBox {
             @Override
             protected void updateItem(String status, boolean empty) {
                 super.updateItem(status, empty);
-                setText(empty ? null : status);
                 getStyleClass().removeAll("status-active", "status-overdue", "status-returned");
-                if (!empty && status != null) {
+                if (empty || status == null) {
+                    setText(null);
+                } else {
+                    setText(status);
                     if (status.equals("OVERDUE")) getStyleClass().add("status-overdue");
                     else if (status.equals("Returned")) getStyleClass().add("status-returned");
                     else getStyleClass().add("status-active");
@@ -106,6 +114,15 @@ public class LoansPane extends VBox {
 
         tv.getColumns().addAll(idCol, bookCol, userCol, borrowedCol, dueCol, statusCol);
         tv.setPlaceholder(new Label("No loans on record."));
+
+        tv.setRowFactory(t -> {
+            TableRow<Loan> row = new TableRow<>();
+            row.setOnMouseClicked(e -> {
+                if (row.isEmpty()) tv.getSelectionModel().clearSelection();
+            });
+            return row;
+        });
+
         return tv;
     }
 

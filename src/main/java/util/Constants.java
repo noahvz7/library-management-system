@@ -7,6 +7,7 @@ public class Constants {
     public static final String ROLE_MEMBER = "MEMBER";
 
     public static final int LOAN_DURATION_DAYS = 14;
+    public static final String LOAN_ID_PREFIX = "L";
 
     // input limits
     public static final int USERNAME_MIN = 3;

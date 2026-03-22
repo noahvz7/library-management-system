@@ -189,8 +189,9 @@
     -fx-background-color: #e8eaf6;
 }
 
-.table-view .table-row-cell:selected .text {
-    -fx-fill: #1a1a2e;
+/* keep normal text dark on selection but dont override status colors */
+.table-view .table-row-cell:selected .table-cell {
+    -fx-text-fill: #1a1a2e;
 }
 
 .table-row-cell:empty {
@@ -206,30 +207,37 @@
     -fx-font-size: 13px;
 }
 
-/* status labels */
-.status-available {
+/* status colors - high specificity so they survive selection/deselection */
+.table-view .table-cell.status-available {
     -fx-text-fill: #2e7d4f;
     -fx-font-weight: bold;
 }
 
-.status-borrowed {
+.table-view .table-cell.status-borrowed {
     -fx-text-fill: #c77c00;
     -fx-font-weight: bold;
 }
 
-.status-overdue {
+.table-view .table-cell.status-overdue {
     -fx-text-fill: #c0392b;
     -fx-font-weight: bold;
 }
 
-.status-returned {
+.table-view .table-cell.status-returned {
     -fx-text-fill: #999;
 }
 
-.status-active {
+.table-view .table-cell.status-active {
     -fx-text-fill: #5c6bc0;
     -fx-font-weight: bold;
 }
+
+/* make sure status colors win even on selected rows */
+.table-view .table-row-cell:selected .table-cell.status-available { -fx-text-fill: #2e7d4f; }
+.table-view .table-row-cell:selected .table-cell.status-borrowed { -fx-text-fill: #c77c00; }
+.table-view .table-row-cell:selected .table-cell.status-overdue { -fx-text-fill: #c0392b; }
+.table-view .table-row-cell:selected .table-cell.status-returned { -fx-text-fill: #999; }
+.table-view .table-row-cell:selected .table-cell.status-active { -fx-text-fill: #5c6bc0; }
 
 /* form fields */
 .text-field, .password-field {
