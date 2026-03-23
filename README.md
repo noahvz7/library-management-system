@@ -30,8 +30,8 @@ A desktop library management application built with Java and JavaFX. Supports us
 
 1. Clone the repository:
 ```
-git clone https://github.com/noahvz7/LibraryManagementSystem.git
-cd LibraryManagementSystem
+git clone https://github.com/noahvz7/library-management-system.git
+cd library-management-system
 ```
 
 2. Install dependencies and compile:
@@ -68,7 +68,7 @@ src/main/java/
     UsersPane.java       - User management (admin only)
   util/
     AuditLogger.java     - Action logging
-    Constants.java       - Centralized configuration values
+    Constants.java       - App-wide constants
     DataManager.java     - JSON file I/O
     LocalDateAdapter.java - Gson adapter for Java date types
     Validator.java       - Input validation
@@ -76,15 +76,15 @@ src/main/java/
 
 ## Security Concepts
 
-This project implements several cybersecurity fundamentals:
+Some of the security features used in this project:
 
 - **Password Hashing** - BCrypt with random salting, intentionally slow to resist brute force attacks.
 - **Input Validation** - All user input is checked for length, format, and content before processing.
 - **Brute Force Protection** - Accounts are temporarily locked after 5 consecutive failed login attempts.
 - **Session Management** - Sessions expire after 15 minutes of inactivity.
-- **Role-Based Access Control** - Principle of least privilege, users only access what their role allows.
+- **Role-Based Access Control** - Users only see and access what their role allows.
 - **Audit Logging** - All user actions are recorded for traceability.
-- **Foreign Key Integrity** - Books and users with active loans cannot be deleted.
+- **Referential Integrity** - Books and users with active loans cannot be deleted.
 
 ## About
 
