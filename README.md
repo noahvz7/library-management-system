@@ -50,28 +50,28 @@ mvn javafx:run
 
 ```
 src/main/java/
-  Main.java              - Application entry point
-  Launcher.java          - IDE compatibility launcher
+  Main.java               - Application entry point
+  Launcher.java           - IDE compatibility launcher
   model/
-    Book.java            - Book data model
-    Loan.java            - Loan data model
-    User.java            - User data model (authentication + patron info)
+    Book.java             - Book data model
+    Loan.java             - Loan data model
+    User.java             - User data model (authentication + patron info)
   service/
-    AuthService.java     - Login, registration, session management
-    LibraryService.java  - Book and loan operations
+    AuthService.java      - Login, registration, session management
+    LibraryService.java   - Book and loan operations
   ui/
-    LoginScreen.java     - Login and registration screen
-    Dashboard.java       - Main layout with sidebar navigation
-    BooksPane.java       - Book catalog view
-    LoansPane.java       - Loan management view
-    OverduePane.java     - Overdue loan tracking
-    UsersPane.java       - User management (admin only)
+    LoginScreen.java      - Login and registration screen
+    Dashboard.java        - Main layout with sidebar navigation
+    BooksPane.java        - Book catalog view
+    LoansPane.java        - Loan management view
+    OverduePane.java      - Overdue loan tracking
+    UsersPane.java        - User management (admin only)
   util/
-    AuditLogger.java     - Action logging
-    Constants.java       - App-wide constants
-    DataManager.java     - JSON file I/O
+    AuditLogger.java      - Action logging
+    Constants.java        - App-wide constants
+    DataManager.java      - JSON file I/O
     LocalDateAdapter.java - Gson adapter for Java date types
-    Validator.java       - Input validation
+    Validator.java        - Input validation
 ```
 
 ## Security Concepts
